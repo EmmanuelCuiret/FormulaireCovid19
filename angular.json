@@ -16,11 +16,12 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular-devkit/build-angular:browser-esbuild",
           "options": {
             "outputPath": "www",
+            "baseHref": "/",
             "index": "src/index.html",
-            "browser": "src/main.ts",
+            "main": "src/main.ts",
             "polyfills": ["src/polyfills.ts"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
@@ -64,8 +65,8 @@
                 }
               ],
               "outputHashing": "all",
-              "baseHref": "/FormulaireCovid19/",
-              "deployUrl": "/FormulaireCovid19/"
+              "baseHref": "/",
+              "deployUrl": "/"
             },
             "development": {
               "optimization": false,

@@ -6,8 +6,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --configuration=production",
-    "deploy": "ng build --configuration production && npx gh-pages -d www",
+    "build": "ng build --configuration production --base-href=/",
+    "deploy": "ng build --configuration production && npx gh-pages -d docs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint"
@@ -34,6 +34,7 @@
     "ionicons": "^7.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "vercel": "^44.1.0",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
