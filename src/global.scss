@@ -1,3 +1,8 @@
+/* Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 @import "@ionic/angular/css/normalize.css";
@@ -13,12 +18,7 @@
 @import "@ionic/angular/css/flex-utils.css";
 
 /* Dark Mode */
-@import "@ionic/angular/css/palettes/dark.system.css";
-
-/* Tailwind */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+//@import "@ionic/angular/css/palettes/dark.system.css";
 
 :root {
   --ion-color-primary: #3880ff;

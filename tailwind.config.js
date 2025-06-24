@@ -1,11 +1,14 @@
 // tailwind.config.js
+const nesting = require('tailwindcss/nesting');
+
 module.exports = {
-  darkMode: 'class', // Enable dark mode support
+  darkMode: 'class',
   content: [
     "./src/**/*.{html,ts}",
+    "./node_modules/@ionic/angular/**/*.{js,ts}"
   ],
   theme: {
     extend: {},
   },
-  plugins: [require('tailwindcss/nesting')(require('postcss-nesting')),],
-};
+  plugins: [nesting(require('postcss-nesting'))],
+}

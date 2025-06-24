@@ -22,7 +22,8 @@
                 placeholder="{{'AGE_PLACEHOLDER' | translate}}"
                 min="1"
                 max="120"
-                (input)="convertNumber($event, 'age')"
+                step="1"
+                (input)="convertIntNumber($event, 'age')"
                 (blur)="form.get('age')?.markAsTouched()"
                 [class.border-red-500]="form.get('age')?.invalid && form.get('age')?.touched"
               />
@@ -89,6 +90,7 @@
                   formControlName="oxygen"
                   min="80"
                   max="100"
+                  step="0.1"
                   (blur)="form.get('oxygen')?.markAsTouched()"
                   class="input-number"
                   [class.border-red-500]="form.get('oxygen')?.invalid && form.get('oxygen')?.touched"
@@ -252,8 +254,7 @@
                     class="data-row"
                   >
                     <ion-col size="4" class="model-name"
-                      >{{isMobile ? detail.methodShort :
-                      detail.methodLong}}</ion-col
+                      >{{detail.method}}</ion-col
                     >
                     <ion-col size="4" class="text-center"
                       >{{getFormattedProbability(detail.ambulatory)}}</ion-col
