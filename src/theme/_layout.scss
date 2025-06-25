@@ -1,0 +1,87 @@
+/* Conteneur principal du formulaire */
+.form-container {
+  padding: 20px;
+  height: 100%;
+}
+
+/* Disposition principale avec formulaire et résultats côte à côte */
+.main-layout {
+  display: flex;
+  gap: 30px; /* Espace entre le form et les résultats */
+  height: 100%;
+  padding: 0 10px; /* Marges latérales */
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+
+    .form-column,
+    .results-column {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .results-column {
+      margin-top: 10px;
+    }
+  }
+}
+
+/* Colonne formulaire */
+.form-column {
+  flex: 1;
+  //max-width: 470px; /* Décommenter si nécessaire */
+}
+
+/* Colonne résultats */
+.results-column {
+  flex: 1;
+  //min-width: 400px; /* Décommenter si nécessaire */
+}
+
+/* Carte contenant les résultats */
+.results-card {
+  background: white;
+  border-radius: 0.375rem;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+/* Titre des résultats */
+.results-title {
+  color: var(--ion-color-primary);
+  margin-bottom: 16px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+}
+
+/* Résumé de prédiction */
+.prediction-summary {
+  margin-bottom: 1rem;
+
+  strong {
+    color: #0065b2;
+  }
+}
+
+/* Liens */
+.link {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.link:hover {
+  color: var(--link-hover-color);
+}
+
+/* Zone de reporting ou d’information */
+.reporting {
+  margin-bottom: 1.25rem;
+}

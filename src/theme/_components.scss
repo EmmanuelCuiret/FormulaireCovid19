@@ -1,0 +1,74 @@
+/* Bouton Ionic : suppression du ripple + text-transform */
+ion-button {
+  --ripple-color: transparent;
+  text-transform: none;
+}
+
+/* Suppression des bordures dans les ion-item */
+ion-item {
+  --inner-border-width: 0 !important;
+}
+
+/* Spinner personnalisé */
+ion-spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-left: 0.5rem;
+  margin-right: -0.25rem; /* Correction du décalage visuel */
+}
+
+/* Suppression des ombres par défaut */
+ion-header,
+ion-footer,
+ion-toolbar {
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Switch personnalisé */
+ion-toggle {
+  --background: #d1d5db;
+  --background-checked: #26aae1;
+  --handle-background: #ffffff;
+  --handle-background-checked: #0065b2;
+}
+
+/* Alerte de succès */
+.global-success {
+  display: block;
+  margin: 1.5rem 0 0 !important;
+  padding: 0.75rem;
+  background-color: var(--ion-background-success);
+  color: var(--ion-text-success) !important;
+  border-left: 4px solid var(--ion-text-success-border-left);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* Alerte d'erreur */
+.global-error {
+  display: block;
+  margin: 1.5rem 0 0 !important;
+  padding: 0.75rem;
+  background-color: #f8d7da;
+  border-left: 4px solid #ef4444;
+  border-radius: 0.375rem;
+  color: #831c24;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* Bloc d'avertissement */
+.warning {
+  background: var(--warning-background-color);
+  padding: 0.75rem 1.25rem 1.25rem 1.25rem;
+  color: var(--warning-text-color);
+  border-radius: 0.375rem;
+
+  p:first-child {
+    font-size: x-large;
+    font-weight: bold;
+    padding-bottom: 4px;
+  }
+}

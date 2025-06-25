@@ -1,0 +1,84 @@
+/* Dark Mode Variables et overrides */
+body.dark {
+  background-color: #171717;
+
+  --ion-color-light: #374151;
+  --ion-color-light-shade: #374151;
+  --ion-color-primary: #64b5f6;
+  --ion-background-color: #121212;
+  --ion-text-color: #ffffff;
+  --ion-color-error: #f87171;
+  --input-bg-color: #374151;
+  --input-border-color: #6b7280;
+  --input-focus-ring: #0065b2;
+  --ion-text-success-border-left: #155724;
+  --ion-alert-text-color: #6b7280;
+  --ion-alert-border-color: #6b7280;
+  --ion-alert-border-selected-color: #0065b2;
+  --ion-alert-background: black;
+  --warning-background-color: #c0b593;
+  --warning-text-color: #634902;
+}
+
+/* Inputs et selects */
+.dark ion-input,
+.dark ion-select {
+  --placeholder-color: white !important; // uniformisation placeholder
+}
+
+/* Success Message en dark mode */
+.global-success.dark {
+  background-color: #450a0a; /* red-900 */
+  border-left-color: #f87171; /* red-400 */
+  color: #f87171; /* red-400 */
+}
+
+/* Erreur globale dark */
+.global-error.dark {
+  background-color: #450a0a; /* red-900 */
+  border-left-color: #f87171; /* red-400 */
+  color: #f87171; /* red-400 */
+}
+
+/* Spinner des champs number */
+.dark .input-number::-webkit-inner-spin-button,
+.dark .input-number::-webkit-outer-spin-button {
+  background-color: #4b5563;
+}
+.dark .input-number::-webkit-inner-spin-button:hover,
+.dark .input-number::-webkit-outer-spin-button:hover {
+  background-color: #6b7280;
+}
+
+/* Dark mode toggle */
+.dark-mode-toggle {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dark-mode-toggle.icon-left,
+.dark-mode-toggle.icon-right {
+  font-size: 1.2rem;
+  padding: 0 6px;
+  line-height: 1;
+}
+
+/* Style pour les selects Ionic en dark mode */
+.dark ion-select {
+  --background: #1e293b; /* slate-800 */
+  --color: #f8fafc !important; /* slate-50 */
+  --placeholder-color: #94a3b8; /* slate-400 */
+  --border-color: #94a3b8; /* slate-700 */
+
+  &::part(icon) {
+    color: #94a3b8; /* slate-400 */
+  }
+}
+
+/* Option sélectionnée */
+.dark .custom-multi-alert [aria-checked="true"] .alert-checkbox-icon {
+  border-color: var(--ion-alert-border-selected-color) !important;
+}

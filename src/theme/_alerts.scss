@@ -1,0 +1,65 @@
+/* =========================
+   Personnalisation des Ion-Alert (radio)
+   ========================= */
+   .custom-alert {
+    /* Option non sélectionnée */
+    [aria-checked="false"] .alert-radio-label {
+      color: var(--ion-alert-text-color);
+      opacity: 0.9;
+    }
+  
+    /* Option sélectionnée */
+    [aria-checked="true"] .alert-radio-label {
+      color: var(--ion-alert-radio-selected) !important;
+      opacity: 0.9;
+    }
+  
+    /* Style du point sélectionné */
+    [aria-checked="true"] .alert-radio-inner {
+      background-color: var(--ion-alert-radio-selected);
+    }
+  
+    --alert-border-color: var(--ion-alert-border-color);
+    --alert-border-width: 2px;
+    --alert-border-radius: 0.375rem;
+  
+    .alert-wrapper {
+      border: var(--alert-border-width) solid var(--alert-border-color);
+      border-radius: var(--alert-border-radius);
+    }
+  
+    .alert-title {
+      text-align: center;
+      color: var(--ion-alert-text-color) !important;
+    }
+  }
+  
+  /* =========================
+     Personnalisation des Ion-Alert (checkbox)
+     ========================= */
+  .custom-multi-alert {
+    --alert-border-color: var(--ion-alert-border-color);
+    --alert-border-width: 2px;
+    --alert-border-radius: 0.375rem;
+  
+    .alert-wrapper {
+      border: var(--alert-border-width) solid var(--alert-border-color);
+      border-radius: var(--alert-border-radius);
+    }
+  
+    .alert-title {
+      text-align: center;
+      color: var(--ion-alert-text-color) !important;
+    }
+  
+    .alert-checkbox-label {
+      color: var(--ion-alert-border-color) !important;
+      font-weight: 500;
+    }
+  
+    .alert-checkbox-icon {
+      border: 2px solid var(--ion-alert-border-color) !important;
+      background-color: var(--ion-alert-background) !important;
+    }
+  }
+  

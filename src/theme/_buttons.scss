@@ -1,0 +1,64 @@
+/* Boutons principaux (submit, send) */
+.submit-button,
+.send-button {
+  --border-radius: 0.375rem !important; /* 6px - rounded-md */
+  --padding-top: 1rem;
+  --padding-bottom: 1rem;
+  --padding-start: 1.25rem;
+  --padding-end: 1.25rem;
+  --background: #0065b2;
+  height: 3.5rem;
+  min-height: 3.5rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+  &::part(native) {
+    font-size: medium;
+    font-weight: 600;
+    border: 1px solid var(--input-border-color);
+    border-radius: 0.375rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  &:active {
+    transform: translateX(1px) scale(0.99);
+  }
+}
+
+/* Mode sombre pour les boutons natifs */
+.dark .submit-button::part(native) {
+  border-color: var(--dark-border-color);
+}
+
+/* Groupe de boutons */
+.boutons {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.boutons ion-button {
+  flex: 1; /* chaque bouton prend la même place */
+}
+
+/* Toggle de mode sombre (icône à gauche ou droite) */
+.dark-mode-toggle {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dark-mode-toggle.icon-left,
+.dark-mode-toggle.icon-right {
+  font-size: 1.2rem;
+  padding: 0 6px;
+  line-height: 1;
+}

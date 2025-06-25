@@ -42,7 +42,7 @@
                 "output": "/"
               }
             ],
-            "styles": ["src/global.scss", "src/theme/variables.scss"]
+            "styles": ["src/theme/global.scss"]
           },
           "configurations": {
             "production": {
@@ -111,7 +111,7 @@
                 "output": "assets"
               }
             ],
-            "styles": ["src/global.scss", "src/theme/variables.scss"],
+            "styles": ["src/theme/global.scss"],
             "scripts": []
           },
           "configurations": {

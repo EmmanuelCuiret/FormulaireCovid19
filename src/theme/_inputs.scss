@@ -1,0 +1,77 @@
+/* Styles pour les ion-input */
+ion-input {
+  width: 100%;
+  border: 1px solid var(--input-border-color);
+  border-radius: 0.375rem;
+  background-color: var(--input-bg-color);
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  --padding-start: 12px !important;
+  --padding-end: 12px !important;
+}
+
+ion-input:focus {
+  box-shadow: 0 0 0 2px var(--input-focus-ring);
+  border-color: var(--input-focus-ring);
+}
+
+ion-label {
+  margin-bottom: 2px;
+  display: block;
+}
+
+/* Styles pour les selects Ionic personnalisés */
+.input-select {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--input-border-color);
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background-color: var(--input-bg-color);
+  --padding-end: 32px; /* Espace pour l'icône */
+  --padding-start: 0.75rem; /* Espace pour le texte */
+
+  /* Pour la bordure rouge */
+  .border-red-500 {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 1px #ef4444 !important;
+  }
+
+  /* Alignement de l'icône */
+  &::part(icon) {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--input-border-color);
+    pointer-events: none;
+  }
+
+  .dark & {
+    --background: none;
+
+    &::part(icon) {
+      color: #94a3b8;
+    }
+  }
+}
+
+/* Suppression des flèches (spinners) pour les champs number */
+.input-number::-webkit-inner-spin-button,
+.input-number::-webkit-outer-spin-button {
+  background-color: var(--input-bg-color);
+  opacity: 1;
+}
+
+/* Suppression complète (fallback moderne) */
+.no-spin {
+  appearance: textfield !important;
+  -moz-appearance: textfield !important;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+    display: none !important;
+  }
+}
