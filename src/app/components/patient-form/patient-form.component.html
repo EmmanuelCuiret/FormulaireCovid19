@@ -1,0 +1,171 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+  <!-- Age Field -->
+  <div class="mb-4">
+    <ion-label>{{ "AGE" | translate }}</ion-label>
+    <ion-input
+      type="number"
+      formControlName="age"
+      placeholder="{{ 'AGE_PLACEHOLDER' | translate }}"
+      min="1"
+      max="120"
+      (input)="convertIntNumber($event, 'age')"
+      [class.border-red-500]="
+        form.get('age')?.invalid && form.get('age')?.touched
+      "
+    >
+    </ion-input>
+    <ion-text *ngIf="getError('age')" color="danger" class="text-sm block mt-1">
+      {{ getError("age") }}
+    </ion-text>
+  </div>
+
+  <!-- Sex Field -->
+  <div class="mb-4">
+    <ion-label>{{ "SEX" | translate }}</ion-label>
+    <ion-select
+      formControlName="sexe"
+      placeholder="{{ 'SEX_PLACEHOLDER' | translate }}"
+      interface="alert"
+      [interfaceOptions]="sexAlertOptions"
+      [class.border-red-500]="
+        form.get('sexe')?.invalid && form.get('sexe')?.touched
+      "
+    >
+      <ion-select-option value="1">{{
+        "SEX_ALERT_MAN" | translate
+      }}</ion-select-option>
+      <ion-select-option value="0">{{
+        "SEX_ALERT_WOMAN" | translate
+      }}</ion-select-option>
+    </ion-select>
+  </div>
+
+  <!-- Temperature/Oxygen Grid -->
+  <div class="grid md:grid-cols-2 gap-4">
+    <!-- Temperature -->
+    <div class="mb-4">
+      <ion-label>{{ "TEMPERATURE" | translate }}</ion-label>
+      <ion-input
+        type="number"
+        formControlName="temperature"
+        min="34"
+        max="43"
+        step="0.1"
+        (input)="convertNumber($event, 'temperature')"
+        [class.border-red-500]="
+          form.get('temperature')?.invalid && form.get('temperature')?.touched
+        "
+      >
+      </ion-input>
+      <ion-text
+        *ngIf="getError('temperature')"
+        color="danger"
+        class="text-sm block mt-1"
+      >
+        {{ getError("temperature") }}
+      </ion-text>
+    </div>
+
+    <!-- Oxygen -->
+    <div class="mb-4">
+      <ion-label>{{ "OXYGEN" | translate }}</ion-label>
+      <ion-input
+        type="number"
+        formControlName="oxygen"
+        min="80"
+        max="100"
+        step="0.1"
+        (input)="convertNumber($event, 'oxygen')"
+        [class.border-red-500]="
+          form.get('oxygen')?.invalid && form.get('oxygen')?.touched
+        "
+      >
+      </ion-input>
+      <ion-text
+        *ngIf="getError('oxygen')"
+        color="danger"
+        class="text-sm block mt-1"
+      >
+        {{ getError("oxygen") }}
+      </ion-text>
+    </div>
+  </div>
+
+  <!-- Risk Factors -->
+  <div class="mb-4">
+    <ion-label>{{ "RISKS" | translate }}</ion-label>
+    <ion-select
+      formControlName="fr"
+      placeholder="{{ 'RISKS_PLACEHOLDER' | translate }}"
+      multiple
+      interface="alert"
+      [interfaceOptions]="risksAlertOptions"
+      [class.border-red-500]="
+        form.get('fr')?.invalid && form.get('fr')?.touched
+      "
+    >
+      <ion-select-option value="asthme">{{
+        "RISKS_ALERT_ASTHMA" | translate
+      }}</ion-select-option>
+      <ion-select-option value="bpco">{{
+        "RISKS_ALERT_COPD" | translate
+      }}</ion-select-option>
+      <ion-select-option value="diabete">{{
+        "RISKS_ALERT_DIABETES" | translate
+      }}</ion-select-option>
+      <ion-select-option value="maladie_cardiovasculaire">
+        {{ "RISKS_ALERT_CARDIOVASCULAR_DISEASE" | translate }}
+      </ion-select-option>
+      <ion-select-option value="neoplasie">{{
+        "RISKS_ALERT_NEOPLASIA" | translate
+      }}</ion-select-option>
+      <ion-select-option value="obese">{{
+        "RISKS_ALERT_OBESITY" | translate
+      }}</ion-select-option>
+    </ion-select>
+  </div>
+
+  <!-- Symptoms -->
+  <div class="mb-4">
+    <ion-label>{{ "SYMPTOMS" | translate }}</ion-label>
+    <ion-select
+      formControlName="symp"
+      placeholder="{{ 'SYMPTOMS_PLACEHOLDER' | translate }}"
+      multiple
+      interface="alert"
+      [interfaceOptions]="symptomsAlertOptions"
+      [class.border-red-500]="
+        form.get('symp')?.invalid && form.get('symp')?.touched
+      "
+    >
+      <ion-select-option value="cephalees">{{
+        "SYMPTOMS_ALERT_HEADACHES" | translate
+      }}</ion-select-option>
+      <ion-select-option value="digestifs">{{
+        "SYMPTOMS_ALERT_DIGESTIVE" | translate
+      }}</ion-select-option>
+      <ion-select-option value="dyspnee">{{
+        "SYMPTOMS_ALERT_DYSPNEA" | translate
+      }}</ion-select-option>
+      <ion-select-option value="fievre">{{
+        "SYMPTOMS_ALERT_FEVER" | translate
+      }}</ion-select-option>
+      <ion-select-option value="myalgies">{{
+        "SYMPTOMS_ALERT_MYALGIA" | translate
+      }}</ion-select-option>
+      <ion-select-option value="toux">{{
+        "SYMPTOMS_ALERT_COUGH" | translate
+      }}</ion-select-option>
+    </ion-select>
+  </div>
+
+  <!-- Submit Button -->
+  <ion-button type="submit" expand="block" [disabled]="isSubmitting">
+    {{ isSubmitting ? ("SUBMITTING" | translate) : ("SUBMIT" | translate) }}
+    <ion-spinner
+      *ngIf="isSubmitting"
+      name="crescent"
+      class="ml-2"
+    ></ion-spinner>
+  </ion-button>
+</form>

@@ -2,83 +2,149 @@ import { Component } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { TranslateService } from '@ngx-translate/core';
 
+/**
+ * Composant racine de l'application Ionic/Angular
+ *
+ * @description
+ * Ce composant sert de point d'entrée principal de l'application et gère :
+ * - L'initialisation et la gestion des langues (i18n)
+ * - La configuration du thème (light/dark mode)
+ * - Les préférences utilisateur persistantes
+ *
+ * @example
+ * <app-root></app-root> // Sélecteur utilisé dans index.html
+ */
 @Component({
-  selector: 'app-root', // Composant racine de l’application
-  templateUrl: 'app.component.html', // Template HTML associé
-  imports: [IonApp, IonRouterOutlet], // Composants Ionic standalone utilisés ici
+  selector: 'app-root',
+  standalone: true,
+  templateUrl: 'app.component.html',
+  styleUrls: ['./app.component.scss'],
+  imports: [IonApp, IonRouterOutlet],
 })
 export class AppComponent {
   /**
-   * Booléen indiquant si le mode sombre est activé.
-   * Cette variable est utilisée pour refléter l'état actuel du thème.
+   * État actuel du mode sombre
+   * @default false Mode clair par défaut
+   *
+   * @remarks
+   * La valeur est persistée dans localStorage et récupérée à l'initialisation
    */
   isDarkMode = false;
 
   /**
-   * Année courante, souvent affichée dans un footer ou ailleurs.
-   * Initialisée à la date au moment de la création du composant.
+   * Année courante utilisée dans le footer
+   * @example
+   * <!-- Dans le template -->
+   * <p>© {{ currentYear }} MonApplication</p>
    */
   currentYear = new Date().getFullYear();
 
   constructor(private translate: TranslateService) {
-    // Récupération de la langue sauvegardée dans localStorage
-    const savedLang = localStorage.getItem('lang');
+    this.initLanguage();
+    this.initTheme();
+  }
 
-    // Détection de la langue du navigateur (ex: 'fr', 'en', etc.)
-    const browserLang = translate.getBrowserLang();
+  /**
+   * Initialise la configuration linguistique de l'application
+   *
+   * @private
+   * @procedure
+   * 1. Définit le français comme langue par défaut
+   * 2. Tente de récupérer la langue sauvegardée
+   * 3. Sinon, utilise la langue du navigateur si supportée
+   * 4. Finalement, utilise le français comme fallback
+   *
+   */
+  private initLanguage(): void {
+    this.translate.setDefaultLang('fr');
 
-    // Définir la langue par défaut (ici, le français)
-    translate.setDefaultLang('fr');
+    const langToUse =
+      this.getValidLanguage(localStorage.getItem('lang')) ?? // Essai 1: Langue sauvegardée
+      this.getValidLanguage(this.translate.getBrowserLang()) ?? // Essai 2: Langue navigateur
+      'fr'; // Fallback final
 
-    // Utilisation de la langue sauvegardée, ou celle du navigateur si supportée (fr ou en),
-    // sinon on revient à la langue par défaut ('fr')
-    translate.use(
-      savedLang ?? (browserLang?.match(/en|fr/) ? browserLang : 'fr')
-    );
+    this.translate.use(langToUse);
+  }
 
-    // Récupérer l'état sauvegardé du mode sombre depuis localStorage
+  /**
+   * Valide et retourne une langue si elle est supportée
+   *
+   * @private
+   * @param lang La langue à valider (peut être null ou undefined)
+   * @returns La langue si valide, sinon undefined
+   *
+   * @remarks
+   * Cette méthode sert de filtre de sécurité pour les langues non supportées
+   */
+  private getValidLanguage(
+    lang: string | null | undefined
+  ): string | undefined {
+    return lang && this.isSupportedLanguage(lang) ? lang : undefined;
+  }
+
+  /**
+   * Initialise le thème de l'application
+   *
+   * @private
+   * @procedure
+   * 1. Récupère la préférence depuis localStorage
+   * 2. Applique le thème correspondant
+   */
+  private initTheme(): void {
     const savedDark = localStorage.getItem('darkMode');
-
-    // Correction : ici on doit comparer avec la chaîne 'true' pour définir le booléen correctement
     this.isDarkMode = savedDark === 'true';
-
-    // Appliquer la classe CSS correspondante sur le body pour activer/désactiver le mode sombre
     this.updateDarkMode();
   }
 
   /**
-   * Méthode pour changer la langue de l'application.
-   * - Utilise ngx-translate pour appliquer la langue.
-   * - Sauvegarde la sélection dans localStorage pour persistance.
-   * @param lang Code langue (ex: 'fr', 'en')
+   * Change la langue active de l'application
+   *
+   * @param lang Le code de langue à utiliser (fr/en)
+   *
+   * @remarks
+   * La nouvelle langue est immédiatement appliquée et persistée
    */
   setLanguage(lang: string) {
-    console.log(`Langue sélectionnée : ${lang}`);
+    console.log(`Changement de langue : ${lang}`);
     this.translate.use(lang);
     localStorage.setItem('lang', lang);
   }
 
   /**
-   * Met à jour la classe CSS 'dark' sur le body selon l'état du mode sombre.
-   * Cette classe est utilisée pour appliquer les styles dark via CSS.
+   * Met à jour les classes CSS pour appliquer le thème actuel
+   *
+   * @private
+   * @description
+   * Ajoute ou retire la classe 'dark' sur le body selon l'état actuel
+   *
+   * @see toggleDarkMode()
    */
   private updateDarkMode() {
-    if (this.isDarkMode) {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
+    document.body.classList.toggle('dark', this.isDarkMode);
   }
 
   /**
-   * Basculer le mode sombre.
-   * - Inverse l'état `isDarkMode`
-   * - Sauvegarde la nouvelle valeur dans localStorage
-   * - Met à jour la classe CSS sur le body pour refléter le changement
+   * Bascule entre les modes clair et sombre
+   *
+   * @description
+   * Inverse l'état actuel, persiste le changement et met à jour l'interface
+   *
+   * @see initTheme()
    */
   toggleDarkMode() {
     this.isDarkMode = !this.isDarkMode;
-    localStorage.setItem('darkMode', this.isDarkMode.toString());
+    localStorage.setItem('darkMode', String(this.isDarkMode));
     this.updateDarkMode();
+  }
+
+  /**
+   * Vérifie si une langue est supportée par l'application
+   *
+   * @private
+   * @param lang Le code de langue à vérifier
+   * @returns true si la langue est supportée, false sinon
+   */
+  private isSupportedLanguage(lang?: string | null): boolean {
+    return !!lang && ['fr', 'en'].includes(lang);
   }
 }

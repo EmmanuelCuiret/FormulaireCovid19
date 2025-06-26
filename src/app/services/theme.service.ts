@@ -1,40 +1,93 @@
 import { Injectable } from '@angular/core';
 
-@Injectable({ providedIn: 'root' }) // Service singleton disponible dans toute l'application
+/**
+ * Service de gestion du thème d'application (clair/sombre)
+ *
+ * @description
+ * Ce service permet :
+ * - De persister la préférence de thème dans localStorage
+ * - D'appliquer dynamiquement le thème au body du document
+ * - De basculer entre les modes clair et sombre
+ *
+ * @example
+ * // Pour basculer le thème
+ * themeService.toggleDarkMode();
+ *
+ * // Pour vérifier l'état actuel
+ * const isDark = themeService.isDarkMode;
+ */
+@Injectable({
+  providedIn: 'root', // Service singleton disponible dans toute l'application
+})
 export class ThemeService {
   /**
-   * Booléen qui indique si le mode sombre est activé ou non.
-   * Initialisé en fonction de la valeur sauvegardée dans localStorage.
+   * État actuel du mode sombre
+   * @remarks
+   * Initialisé à partir de localStorage lors de la construction
+   * Utilise 'false' comme valeur par défaut si aucune préférence n'est sauvegardée
    */
-  isDarkMode = false;
+  public isDarkMode: boolean = false;
 
   constructor() {
-    // Lors de la création du service, récupération de la préférence enregistrée dans localStorage
-    const saved = localStorage.getItem('darkMode');
+    this.initializeTheme();
+  }
 
-    // La préférence est une chaîne, on la convertit en booléen
-    this.isDarkMode = saved === 'true';
-
-    // Appliquer immédiatement le thème (ajout ou suppression de la classe CSS 'dark' sur le body)
+  /**
+   * Initialise le thème au démarrage
+   * @private
+   * @description
+   * 1. Récupère la préférence depuis localStorage
+   * 2. Convertit la chaîne en booléen
+   * 3. Applique le thème correspondant
+   */
+  private initializeTheme(): void {
+    const savedPreference = localStorage.getItem('darkMode');
+    this.isDarkMode = savedPreference === 'true'; // Convertit 'true' en true, autre valeur en false
     this.applyTheme();
   }
 
   /**
-   * Inverse l'état actuel du mode sombre.
-   * Met à jour localStorage avec la nouvelle valeur.
-   * Applique le thème mis à jour sur le body.
+   * Bascule entre les modes clair et sombre
+   * @description
+   * 1. Inverse l'état actuel
+   * 2. Persiste la nouvelle préférence
+   * 3. Applique le changement visuel
    */
-  toggleDarkMode() {
+  public toggleDarkMode(): void {
     this.isDarkMode = !this.isDarkMode;
-    localStorage.setItem('darkMode', this.isDarkMode.toString());
+    this.persistPreference();
     this.applyTheme();
   }
 
   /**
-   * Applique ou retire la classe CSS 'dark' sur le body selon l'état isDarkMode.
-   * Utilisation de classList.toggle avec second param pour ajouter ou retirer explicitement.
+   * Persiste la préférence de thème dans localStorage
+   * @private
    */
-  private applyTheme() {
+  private persistPreference(): void {
+    try {
+      localStorage.setItem('darkMode', this.isDarkMode.toString());
+    } catch (e) {
+      console.error('Erreur de sauvegarde du thème', e);
+    }
+  }
+
+  /**
+   * Applique le thème actuel au document
+   * @private
+   * @description
+   * Ajoute ou retire la classe 'dark' sur le body selon l'état actuel
+   * Utilise classList.toggle avec force pour une gestion explicite
+   */
+  private applyTheme(): void {
     document.body.classList.toggle('dark', this.isDarkMode);
+  }
+
+  /**
+   * Vérifie si le mode sombre est activé
+   * @returns État actuel du mode sombre
+   * @deprecated Préférer l'accès direct à isDarkMode
+   */
+  public isDarkModeEnabled(): boolean {
+    return this.isDarkMode;
   }
 }

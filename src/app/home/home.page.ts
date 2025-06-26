@@ -1,605 +1,206 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PredictionService } from '../services/prediction.service';
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  AbstractControl,
-  ValidationErrors,
-} from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { LayoutComponent } from '../components/layout';
-import { ReactiveFormsModule } from '@angular/forms';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { OnDestroy } from '@angular/core';
-import { AlertButton } from '@ionic/core';
+import { Subscription } from 'rxjs';
+import { PatientFormComponent } from '../components/patient-form/patient-form.component';
+import { PredictionResultsComponent } from '../components/prediction-results/prediction-results.component';
+import { ReportingFormComponent } from '../components/reporting-form/reporting-form.component';
+import { PredictionService } from '../services/prediction.service';
+import { LayoutComponent } from '../components/layout';
 
 /**
- * Validateur personnalisé pour s'assurer que la valeur respecte un pas donné (ex. 0.1).
- * Tolère les erreurs dues aux nombres flottants (arrondis binaires).
+ * Page principale de l'application - Formulaire de prédiction médicale
+ *
+ * @description
+ * Cette page coordonne les trois principaux composants :
+ * 1. Le formulaire de saisie des données patient
+ * 2. L'affichage des résultats de prédiction
+ * 3. Le formulaire de reporting des divergences
+ *
+ * Elle gère également :
+ * - La communication avec le service de prédiction
+ * - La transformation des données au format FHIR
+ * - L'affichage conditionnel des différentes sections
  */
-export function stepValidator(step: number) {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const rawValue = control.value;
-
-    if (rawValue === null || rawValue === '') return null; // Champ vide est valide
-
-    const value = parseFloat(rawValue);
-    if (isNaN(value)) return { invalidNumber: true }; // Valeur non numérique invalide
-
-    const remainder = (value / step) % 1;
-
-    // Tolérance pour arrondis flottants
-    const epsilon = 1e-8;
-    if (remainder > epsilon && 1 - remainder > epsilon) {
-      return { step: true }; // Erreur si pas respecté
-    }
-
-    return null; // Valide sinon
-  };
-}
-
-// Interface pour la configuration d'une alerte IonAlert personnalisée
-interface AlertTitles {
-  header?: string;
-  buttons: AlertButton[];
-  cssClass?: string;
-}
-
-// Interface pour la réponse API attendue
-interface ApiResponse {
-  success: boolean;
-  message?: string;
-  data?: any;
-}
-
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
-    IonicModule,
-    ReactiveFormsModule,
     CommonModule,
-    LayoutComponent,
+    IonicModule,
     TranslateModule,
+    PatientFormComponent,
+    PredictionResultsComponent,
+    ReportingFormComponent,
+    LayoutComponent,
   ],
   templateUrl: './home.page.html',
 })
 export class HomePage implements OnDestroy {
-  // Formulaires
-  form: FormGroup; // Formulaire principal avec les données patients
-  formResult: FormGroup; // Formulaire pour les résultats / reporting
+  //#region Etats d'affichage
 
-  // États UI
-  isSubmitting = false;
-  isSending = false;
-  isCleaning = false;
-  submitButtonText = this.translate.instant('SUBMIT');
-  sendButtonText = this.translate.instant('SEND');
+  /** Détermine si la section des résultats doit être affichée */
   showResults = false;
-  errorMessage: string | null = null;
+
+  /** Détermine si les détails avancés des résultats sont visibles */
   showResultsDetails = false;
-  isMobile = false;
+
+  /** Détermine si le formulaire de reporting est visible */
   showReportingDetails = false;
+
+  /** Affiche un message de succès après soumission du reporting */
   showSuccessMessage = false;
 
-  // Données affichées
-  predictionSummary: any;
-  predictionDetails: any[] = [];
+  /** Indique si une soumission est en cours (état de chargement) */
+  isSubmitting = false;
 
-  private translationSub: any; // Souscription à la langue pour mise à jour dynamique
+  //#endregion
 
-  // Configuration des titres et boutons des alertes contextuelles
-  alertOptions: Record<string, AlertTitles> = {};
+  //#region Données
+
+  /** Stocke les données de prédiction reçues du service */
+  predictionData: any;
+
+  //#endregion
+
+  //#region Gestion des souscriptions
+
+  /** Collection des souscriptions pour une désinscription propre */
+  private subscriptions = new Subscription();
+
+  //#endregion
+
+  constructor(
+    private translate: TranslateService,
+    private predictionService: PredictionService
+  ) {}
 
   /**
-   * Définit les options d'alertes (titre, boutons) traduits selon le contexte
+   * Nettoie les ressources lors de la destruction du composant
+   * @public
+   * @implementation OnDestroy
    */
-  availableTitles(): Record<string, AlertTitles> {
-    return {
-      sexe: {
-        header: this.translate.instant('SEX_ALERT_TITLE'),
-        buttons: [
-          { text: this.translate.instant('CANCEL'), role: 'cancel' },
-          { text: this.translate.instant('OK'), role: 'confirm' },
-        ],
-      },
-      fr: {
-        header: this.translate.instant('RISKS_ALERT_TITLE'),
-        buttons: [
-          { text: this.translate.instant('CANCEL'), role: 'cancel' },
-          { text: this.translate.instant('OK'), role: 'confirm' },
-        ],
-      },
-      symp: {
-        header: this.translate.instant('SYMPTOMS_ALERT_TITLE'),
-        buttons: [
-          { text: this.translate.instant('CANCEL'), role: 'cancel' },
-          { text: this.translate.instant('OK'), role: 'confirm' },
-        ],
-      },
-      country: {
-        header: this.translate.instant('COUNTRY_ALERT_TITLE'),
-        buttons: [
-          { text: this.translate.instant('CANCEL'), role: 'cancel' },
-          { text: this.translate.instant('OK'), role: 'confirm' },
-        ],
-      },
-    };
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
-  /**
-   * Renvoie les options d'alerte avec un style CSS standard
-   */
-  getAlertOptions(context: string): AlertTitles {
-    return {
-      cssClass: 'custom-alert',
-      ...this.availableTitles()[context],
-    };
-  }
+  //#region Gestion des événements
 
   /**
-   * Renvoie les options d'alerte avec un style CSS multi-sélections
+   * Gère la soumission du formulaire patient
+   * @param formData - Les données du formulaire formatées
+   * @description
+   * 1. Met à jour l'état de soumission
+   * 2. Convertit les données au format FHIR
+   * 3. Appelle le service de prédiction
+   * 4. Gère la réponse ou les erreurs
    */
-  getMultiAlertOptions(context: string): AlertTitles {
-    return {
-      cssClass: 'custom-multi-alert',
-      ...this.availableTitles()[context],
-    };
-  }
-
-  /**
-   * Formate une probabilité décimale en pourcentage affichable
-   */
-  getFormattedProbability(decimal: number): string {
-    if (decimal === null || isNaN(decimal)) return 'N/A';
-    const percentage = Math.round(decimal * 100);
-    return `${percentage}%`;
-  }
-
-  /**
-   * Réinitialise les formulaires et cache les résultats
-   */
-  clearForm() {
+  handleFormSubmission(formData: any): void {
+    this.isSubmitting = true;
     this.showResults = false;
-    this.showResultsDetails = false;
-    this.showReportingDetails = false;
-    this.form.reset();
-    this.formResult.reset();
+
+    this.subscriptions.add(
+      this.predictionService
+        .predictHospitalization(this.createFhirPayload(formData))
+        .subscribe({
+          next: (response) => {
+            this.isSubmitting = false;
+            this.predictionData = this.processApiResponse(response);
+            this.showResults = true;
+          },
+          error: (err) => {
+            this.isSubmitting = false;
+            console.error('Erreur de prédiction:', err);
+            // TODO: Ajouter la gestion des erreurs utilisateur
+          },
+        })
+    );
   }
 
   /**
-   * Convertit une valeur saisie en nombre et la place dans le formControl
+   * Gère la soumission du formulaire de reporting
+   * @param reportData - Données du formulaire de reporting
+   * @description
+   * Affiche un message de succès pendant 3 secondes
    */
-  convertNumber(event: any, controlName: string) {
-    const value = parseFloat(event.target.value);
-    this.form.get(controlName)?.setValue(isNaN(value) ? null : value);
+  handleReportingSubmission(reportData: any): void {
+    this.showSuccessMessage = true;
+    setTimeout(() => (this.showSuccessMessage = false), 3000);
   }
 
   /**
-   * Convertit une valeur saisie en nombre entier et la place dans le formControl
+   * Bascule l'affichage des détails des résultats
    */
-  convertIntNumber(event: any, controlName: string) {
-    const value = event.target.value;
-    const intValue = parseInt(value, 10);
-    if (isNaN(intValue)) {
-      this.form.get(controlName)?.setValue(null);
-    } else {
-      this.form.get(controlName)?.setValue(intValue);
-    }
-  }
-
-  /**
-   * Filtre la saisie pour ne garder que les chiffres, met à jour et valide
-   */
-  filterNumbers(event: any) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
-
-    input.value = value.replace(/[^0-9]/g, ''); // Ne garder que chiffres
-    this.formResult.get('providerNumber')?.setValue(input.value);
-    this.formResult.get('providerNumber')?.updateValueAndValidity();
-  }
-
-  /**
-   * Simule l'envoi d'un message à l'équipe médicale,
-   * affiche une confirmation, réinitialise le formulaire
-   */
-  contactMedicalTeam() {
-    if (this.formResult.valid && !this.isSubmitting) {
-      this.isSending = true;
-      this.isCleaning = true;
-      this.sendButtonText = this.translate.instant('SENDING');
-      this.showSuccessMessage = false;
-
-      setTimeout(() => {
-        console.log('Message transmis avec succès (simulation)');
-        this.isSending = false;
-        this.isCleaning = false;
-        this.sendButtonText = this.translate.instant('SEND');
-        this.showSuccessMessage = true;
-        this.formResult.reset();
-
-        setTimeout(() => {
-          this.showSuccessMessage = false;
-        }, 3000);
-      }, 1000);
-    } else {
-      this.formResult.markAllAsTouched();
-    }
-  }
-
-  /**
-   * Affiche ou cache le détail des résultats
-   */
-  toggleDetails(event: Event) {
-    event.preventDefault();
+  toggleDetails(): void {
     this.showResultsDetails = !this.showResultsDetails;
   }
 
   /**
-   * Affiche ou cache les détails du reporting médical
+   * Bascule l'affichage du formulaire de reporting
    */
-  toggleReporting(event: Event) {
-    event.preventDefault();
+  toggleReporting(): void {
     this.showReportingDetails = !this.showReportingDetails;
   }
 
-  /**
-   * Getter indiquant si un message global d'erreur doit être affiché sur le formulaire
-   */
-  get showGlobalError(): boolean {
-    return !!(
-      this.form.invalid &&
-      this.form.touched &&
-      (this.form.get('age')?.hasError('required') ||
-        this.form.get('sexe')?.hasError('required') ||
-        this.form.get('fr')?.hasError('required') ||
-        this.form.get('symp')?.hasError('required'))
-    );
-  }
+  //#endregion
 
-  // Reference sur l’élément DOM pour le scroll automatique vers les résultats
-  @ViewChild('resultsRef') resultsRef!: ElementRef;
-
-  constructor(
-    private fb: FormBuilder,
-    private predictionService: PredictionService,
-    private breakpointObserver: BreakpointObserver,
-    private translate: TranslateService
-  ) {
-    // Formulaire résultats (ex: numéro fournisseur)
-    this.formResult = this.fb.group({
-      providerNumber: [
-        '',
-        [
-          Validators.required,
-          Validators.pattern(/^[0-9]+$/), // chiffres uniquement
-        ],
-      ],
-    });
-
-    // Formulaire principal patient
-    this.form = this.fb.group({
-      age: ['', [Validators.required, Validators.min(1), Validators.max(120)]],
-      sexe: ['', Validators.required],
-      temperature: [
-        '',
-        [Validators.min(34), Validators.max(43), stepValidator(0.1)],
-      ],
-      oxygen: [
-        '',
-        [Validators.min(80), Validators.max(100), stepValidator(0.1)],
-      ],
-      fr: [[], Validators.required],
-      symp: [[], Validators.required],
-    });
-
-    // Initialisation des textes traduits des boutons
-    this.setTranslatedButtons();
-
-    // Souscription aux changements de langue pour mettre à jour les labels boutons
-    this.translationSub = this.translate.onLangChange.subscribe(() => {
-      this.setTranslatedButtons();
-    });
-  }
-
-  ngOnDestroy(): void {
-    // Nettoyage de la souscription pour éviter fuite mémoire
-    if (this.translationSub) {
-      this.translationSub.unsubscribe();
-    }
-  }
+  //#region Méthodes privées
 
   /**
-   * Met à jour les libellés des boutons à la langue courante
+   * Transforme les données du formulaire en payload FHIR
+   * @param formData - Données brutes du formulaire
+   * @returns Payload au format FHIR
+   * @private
+   * @description
+   * Structure FHIR attendue par l'API backend :
+   * - Inclut les données obligatoires (âge, sexe)
+   * - Formate les listes (risques, symptômes)
+   * - Gère les champs optionnels (température, oxygène)
    */
-  private setTranslatedButtons(): void {
-    this.submitButtonText = this.translate.instant('SUBMIT');
-    this.sendButtonText = this.translate.instant('SEND');
-  }
-
-  /**
-   * Getter qui retourne un message d'erreur si le formulaire des résultats est invalide
-   */
-  get requiredFieldsResultError(): string | null {
-    if (!this.formResult.invalid || !this.formResult.touched) return null;
-    const missingFields = this.formResult
-      .get('providerNumber')
-      ?.hasError('required');
-    if (!missingFields) return null;
-    return this.translate.instant('FORM_RESULTS_FILLING_ERRORS');
-  }
-
-  /**
-   * Getter qui retourne un message d'erreur pour les champs requis du formulaire principal
-   */
-  get requiredFieldsError(): String | null {
-    if (!this.form.invalid || !this.form.touched) return null;
-
-    const labels: Record<string, string> = {
-      age: this.translate.instant('FORM_FILLING_AGE_ERRORS'),
-      sexe: this.translate.instant('FORM_FILLING_SEX_ERRORS'),
-      fr: this.translate.instant('FORM_FILLING_RISKS_ERRORS'),
-      symp: this.translate.instant('FORM_FILLING_SYMPTOMS_ERRORS'),
-    };
-
-    const missingFields = Object.keys(labels).filter((field) =>
-      this.form.get(field)?.hasError('required')
-    );
-
-    if (missingFields.length === 0) return null;
-
-    const labelList = missingFields.map((f) => `${labels[f]}`);
-
-    let message: string;
-
-    if (labelList.length === 1) {
-      message =
-        this.translate.instant('FORM_FILLING_LEFT_PART_SINGLE') +
-        labelList[0] +
-        this.translate.instant('FORM_FILLING_RIGHT_PART_SINGLE');
-    } else {
-      const last = labelList.pop();
-      message =
-        this.translate.instant('FORM_FILLING_LEFT_PART') +
-        labelList.join(', ') +
-        this.translate.instant('FORM_FILLING_MIDDLE_PART') +
-        last +
-        this.translate.instant('FORM_FILLING_RIGHT_PART');
-    }
-
-    return message;
-  }
-
-  /**
-   * Affiche un message d'erreur temporaire dans l'UI
-   * @param message Message à afficher
-   */
-  showError(message: string) {
-    this.errorMessage = message;
-    setTimeout(() => {
-      this.errorMessage = null;
-    }, 10000); // 10 secondes
-  }
-
-  /**
-   * Soumission du formulaire principal pour lancer la prédiction
-   */
-  onSubmit() {
-    this.errorMessage = null;
-    if (this.form.valid && !this.isSubmitting) {
-      this.isSubmitting = true;
-      this.isCleaning = true;
-      this.submitButtonText = this.translate.instant('SUBMITTING');
-      this.showResults = false;
-
-      // Conversion des données du formulaire au format attendu par l'API (FHIR)
-      const fhirData = this.createFhirPayLoad(this.form.value);
-
-      console.log('Données envoyées:', fhirData);
-
-      this.predictionService.predictHospitalization(fhirData).subscribe({
-        next: (response: any) => {
-          // Vérification robuste de la validité de la réponse
-          if (!response || typeof response.success !== 'boolean') {
-            this.showError('Réponse serveur invalide');
-            this.resetSubmitState();
-            return;
-          }
-
-          if (response.success === false) {
-            const errorMessage =
-              response.message || 'Une erreur inconnue est survenue';
-            this.showError(errorMessage);
-            this.resetSubmitState();
-            return;
-          }
-
-          // Traitement en cas de succès
-          console.log('Succès:', response);
-          this.processApiResponse(response);
-          this.resetSubmitState();
-          this.showResults = true;
-
-          // Scroll vers résultats sur mobile
-          this.scrollToResultsOnMobile();
-        },
-        error: (err: any) => {
-          console.error('Erreur:', err);
-          this.resetSubmitState();
-
-          // Gestion détaillée des erreurs HTTP
-          let errorMessage = 'Erreur réseau';
-          if (err.error?.message) {
-            errorMessage = err.error.message;
-          } else if (err.message) {
-            errorMessage = err.message;
-          } else if (err.status) {
-            errorMessage =
-              `Erreur ${err.status}` +
-              (err.statusText ? `: ${err.statusText}` : '');
-          }
-
-          this.showError(errorMessage);
-        },
-      });
-    } else {
-      this.form.markAllAsTouched(); // Affiche les erreurs dans le formulaire
-      console.warn('❌ Formulaire invalide', this.form.value);
-    }
-  }
-
-  /**
-   * Réinitialise les états d'envoi du formulaire et le texte du bouton
-   */
-  private resetSubmitState(): void {
-    this.isSubmitting = false;
-    this.isCleaning = false;
-    this.submitButtonText = this.translate.instant('SUBMIT');
-  }
-
-  /**
-   * Scroll automatique vers les résultats sur mobile, pour une meilleure UX
-   */
-  private scrollToResultsOnMobile(): void {
-    this.breakpointObserver
-      .observe([Breakpoints.Handset])
-      .subscribe((result) => {
-        if (result.matches) {
-          this.isMobile = true;
-          setTimeout(() => {
-            this.resultsRef?.nativeElement.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-            });
-          }, 100);
-        }
-      });
-  }
-
-  /**
-   * Crée le payload au format FHIR attendu par l'API,
-   * à partir des données du formulaire utilisateur
-   *
-   * Le format est un tableau d'objets, avec chaque élément
-   * représentant un composant (age, sexe, facteurs de risques, symptômes, etc.)
-   */
-  private createFhirPayLoad(formData: any): any[] {
+  private createFhirPayload(formData: any): any[] {
     const now = new Date().toISOString();
-
-    // Conversion des facteurs de risque en 0/1 selon la présence dans le formulaire
-    const riskFactors = {
-      fr_asthme: formData.fr.includes('asthme') ? 1 : 0,
-      fr_bpco: formData.fr.includes('bpco') ? 1 : 0,
-      fr_diabete: formData.fr.includes('diabete') ? 1 : 0,
-      fr_maladie_cardiovasculaire: formData.fr.includes(
-        'maladie_cardiovasculaire'
-      )
-        ? 1
-        : 0,
-      fr_neoplasie: formData.fr.includes('neoplasie') ? 1 : 0,
-      fr_obese: formData.fr.includes('obese') ? 1 : 0,
-    };
-
-    // Conversion des symptômes en 0/1
-    const symptoms = {
-      symp_cephalees: formData.symp.includes('cephalees') ? 1 : 0,
-      symp_digestifs: formData.symp.includes('digestifs') ? 1 : 0,
-      symp_dyspnee: formData.symp.includes('dyspnee') ? 1 : 0,
-      symp_fievre: formData.symp.includes('fievre') ? 1 : 0,
-      symp_myalgies: formData.symp.includes('myalgies') ? 1 : 0,
-      symp_toux: formData.symp.includes('toux') ? 1 : 0,
-    };
-
-    // Construction de la structure FHIR attendue par l'API
     return [
       {
-        subject: {
-          reference: 'patient-id', // A remplacer par ID réel
-          display: 'nom et prénom du patient', // Facultatif
-        },
+        subject: { reference: 'patient-id' },
         issued: now,
         component: [
+          // Données démographiques
           {
-            valueQuantity: { value: Number(formData.age) },
-            code: {
-              coding: [
-                { code: 'age', display: 'Age', system: 'http://comunicare.io' },
-              ],
-            },
+            code: { coding: [{ code: 'age' }] },
+            valueQuantity: { value: formData.age },
           },
           {
-            valueQuantity: { value: Number(formData.sexe) },
-            code: {
-              coding: [
-                {
-                  code: 'sexe',
-                  display: 'Sexe',
-                  system: 'http://comunicare.io',
-                },
-              ],
-            },
+            code: { coding: [{ code: 'sexe' }] },
+            valueQuantity: { value: formData.sexe },
           },
-          // Ajout des facteurs de risque
-          ...Object.entries(riskFactors).map(([code, value]) => ({
-            valueQuantity: { value },
-            code: {
-              coding: [
-                {
-                  code,
-                  display: code.replace('fr_', '').replace('_', ' '),
-                  system: 'http://comunicare.io',
-                },
-              ],
-            },
+
+          // Facteurs de risque (format binaire)
+          ...formData.fr.map((risk: string) => ({
+            code: { coding: [{ code: `fr_${risk}` }] },
+            valueQuantity: { value: 1 }, // 1 = présent, 0 = absent (non implémenté)
           })),
-          // Ajout des symptômes
-          ...Object.entries(symptoms).map(([code, value]) => ({
-            valueQuantity: { value },
-            code: {
-              coding: [
-                {
-                  code,
-                  display: code.replace('symp_', ''),
-                  system: 'http://comunicare.io',
-                },
-              ],
-            },
+
+          // Symptômes (format binaire)
+          ...formData.symp.map((symptom: string) => ({
+            code: { coding: [{ code: `symp_${symptom}` }] },
+            valueQuantity: { value: 1 },
           })),
-          // Température (optionnelle)
+
+          // Données physiologiques optionnelles
           ...(formData.temperature
             ? [
                 {
-                  valueQuantity: { value: Number(formData.temperature) },
-                  code: {
-                    coding: [
-                      {
-                        code: 'temperature',
-                        display: 'Température',
-                        system: 'http://comunicare.io',
-                      },
-                    ],
-                  },
+                  code: { coding: [{ code: 'temperature' }] },
+                  valueQuantity: { value: formData.temperature },
                 },
               ]
             : []),
-          // Oxygène (optionnelle)
           ...(formData.oxygen
             ? [
                 {
-                  valueQuantity: { value: Number(formData.oxygen) },
-                  code: {
-                    coding: [
-                      {
-                        code: 'oxygen',
-                        display: 'Oxygène',
-                        system: 'http://comunicare.io',
-                      },
-                    ],
-                  },
+                  code: { coding: [{ code: 'oxygen' }] },
+                  valueQuantity: { value: formData.oxygen },
                 },
               ]
             : []),
@@ -609,53 +210,36 @@ export class HomePage implements OnDestroy {
   }
 
   /**
-   * Traite la réponse API et prépare les données à afficher
+   * Transforme la réponse de l'API pour l'affichage
+   * @param response - Réponse brute de l'API
+   * @returns Données structurées pour le template
+   * @private
    */
-  private processApiResponse(response: any) {
-    if (response.success && response.data?.length > 0) {
-      const predictionData = response.data[0].prediction;
+  private processApiResponse(response: any): any {
+    if (!response?.data?.length) return null;
 
-      // Extraction du résumé
-      this.predictionSummary = predictionData.find(
-        (p: any) => p.rationale === 'summary'
-      );
+    const prediction = response.data[0].prediction;
+    return {
+      // Probabilité globale (résumé)
+      probabilityDecimal: prediction.find((p: any) => p.rationale === 'summary')
+        ?.probabilityDecimal,
 
-      // Organisation des détails selon la méthode utilisée
-      this.predictionDetails = [
-        {
-          method: this.translate.instant('RF'),
-          ambulatory: this.getProbability(predictionData, 'RF', 'ambulatoire'),
-          hospitalization: this.getProbability(
-            predictionData,
-            'RF',
-            'hospitalise'
-          ),
-        },
-        {
-          method: this.translate.instant('NN'),
-          ambulatory: this.getProbability(predictionData, 'NN', 'ambulatoire'),
-          hospitalization: this.getProbability(
-            predictionData,
-            'NN',
-            'hospitalise'
-          ),
-        },
-        {
-          method: this.translate.instant('GBT'),
-          ambulatory: this.getProbability(predictionData, 'GBT', 'ambulatoire'),
-          hospitalization: this.getProbability(
-            predictionData,
-            'GBT',
-            'hospitalise'
-          ),
-        },
-      ];
-    }
+      // Détails par méthode de prédiction
+      details: ['RF', 'NN', 'GBT'].map((method) => ({
+        method: this.translate.instant(method), // Traduction du nom de méthode
+        ambulatory: this.getProbability(prediction, method, 'ambulatoire'),
+        hospitalization: this.getProbability(prediction, method, 'hospitalise'),
+      })),
+    };
   }
 
   /**
-   * Récupère la probabilité dans le tableau de prédictions
-   * selon la méthode (rationale) et le type de résultat (outcome)
+   * Extrait une probabilité spécifique des données de prédiction
+   * @param data - Données de prédiction complètes
+   * @param rationale - Méthode de prédiction (RF/NN/GBT)
+   * @param outcome - Résultat recherché (ambulatoire/hospitalise)
+   * @returns Probabilité entre 0 et 1
+   * @private
    */
   private getProbability(
     data: any[],
@@ -668,4 +252,6 @@ export class HomePage implements OnDestroy {
     );
     return prediction?.probabilityDecimal || 0;
   }
+
+  //#endregion
 }

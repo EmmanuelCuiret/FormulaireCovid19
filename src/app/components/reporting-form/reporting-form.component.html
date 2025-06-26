@@ -1,0 +1,90 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+  <!-- Provider Number -->
+  <div class="mb-4">
+    <ion-label>{{ "PROVIDER_NUMBER" | translate }}</ion-label>
+    <ion-input
+      type="text"
+      [formControl]="getFormControl('providerNumber')"
+      inputmode="numeric"
+      (ionInput)="filterNumbers($event)"
+      [class.border-red-500]="
+        getFormControl('providerNumber').invalid &&
+        getFormControl('providerNumber').touched
+      "
+    >
+    </ion-input>
+
+    <ion-text
+      *ngIf="
+        getFormControl('providerNumber').hasError('required') &&
+        getFormControl('providerNumber').touched
+      "
+      color="danger"
+      class="text-sm block mt-1"
+    >
+      {{ "FIELD_REQUIRED" | translate }}
+    </ion-text>
+
+    <ion-text
+      *ngIf="
+        getFormControl('providerNumber').hasError('pattern') &&
+        getFormControl('providerNumber').touched
+      "
+      color="danger"
+      class="text-sm block mt-1"
+    >
+      {{ "NUMERIC_ONLY" | translate }}
+    </ion-text>
+  </div>
+
+  <!-- Country -->
+  <div class="mb-4">
+    <ion-label>{{ "COUNTRY" | translate }}</ion-label>
+    <ion-select
+      [formControl]="getFormControl('country')"
+      interface="alert"
+      [interfaceOptions]="countryAlertOptions"
+    >
+      <ion-select-option value="DE">{{
+        "COUNTRY_ALERT_DE" | translate
+      }}</ion-select-option>
+      <ion-select-option value="AT">{{
+        "COUNTRY_ALERT_AT" | translate
+      }}</ion-select-option>
+      <ion-select-option value="BE">{{
+        "COUNTRY_ALERT_BE" | translate
+      }}</ion-select-option>
+      <ion-select-option value="FR">{{
+        "COUNTRY_ALERT_FR" | translate
+      }}</ion-select-option>
+      <ion-select-option value="IE">{{
+        "COUNTRY_ALERT_IE" | translate
+      }}</ion-select-option>
+      <ion-select-option value="LU">{{
+        "COUNTRY_ALERT_LU" | translate
+      }}</ion-select-option>
+      <ion-select-option value="NL">{{
+        "COUNTRY_ALERT_NL" | translate
+      }}</ion-select-option>
+      <ion-select-option value="GB">{{
+        "COUNTRY_ALERT_GB" | translate
+      }}</ion-select-option>
+      <ion-select-option value="CH">{{
+        "COUNTRY_ALERT_CH" | translate
+      }}</ion-select-option>
+    </ion-select>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="showSuccess" class="global-success mb-4">
+    <ion-text color="success">
+      <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+      {{ "FORM_RESULTS_SENDING_SUCCESS" | translate }}
+    </ion-text>
+  </div>
+
+  <!-- Submit Button -->
+  <ion-button type="submit" expand="block" [disabled]="form.invalid">
+    {{ "SEND" | translate }}
+  </ion-button>
+</form>

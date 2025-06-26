@@ -1,0 +1,66 @@
+<div class="results-container">
+  <h2 class="ion-text-center text-xl md:text-3xl font-semibold mb-8">
+    {{ "PREDICTION" | translate }}
+  </h2>
+
+  <div class="prediction-summary">
+    <p>
+      {{ "PREDICTION_LEFT_PURCENT" | translate }}
+      <strong>{{
+        getFormattedProbability(predictionData?.probabilityDecimal)
+      }}</strong>
+      {{ "PREDICTION_RIGHT_PURCENT" | translate }}
+    </p>
+  </div>
+
+  <p class="prediction-summary">
+    {{ "MORE_DETAILS" | translate }}
+    <a
+      href="#"
+      (click)="toggleDetails.emit(); $event.preventDefault()"
+      class="link"
+    >
+      {{ "MORE_DETAILS_CLICK_HERE" | translate }} </a
+    >.
+  </p>
+
+  <div *ngIf="showDetails" class="patient-data">
+    <ion-grid class="prediction-table">
+      <ion-row class="header-row">
+        <ion-col size="4">{{ "MODEL" | translate }}</ion-col>
+        <ion-col size="4" class="text-center">{{
+          "AMBULATORY" | translate
+        }}</ion-col>
+        <ion-col size="4" class="text-center">{{
+          "HOSPITALIZED" | translate
+        }}</ion-col>
+      </ion-row>
+
+      <ion-row *ngFor="let detail of predictionData?.details" class="data-row">
+        <ion-col size="4" class="model-name">{{ detail.method }}</ion-col>
+        <ion-col size="4" class="text-center">{{
+          getFormattedProbability(detail.ambulatory)
+        }}</ion-col>
+        <ion-col size="4" class="text-center">{{
+          getFormattedProbability(detail.hospitalization)
+        }}</ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+
+  <div class="reporting">
+    {{ "DOCTOR_DISAGREES" | translate }}
+    <a
+      href="#"
+      (click)="toggleReporting.emit(); $event.preventDefault()"
+      class="link"
+    >
+      {{ "DOCTOR_DISAGREES_REPORT_IT" | translate }}
+    </a>
+  </div>
+
+  <div class="warning mt-4">
+    <p>{{ "WARNING" | translate }}</p>
+    <p>{{ "WARNING_DETAILS" | translate }}</p>
+  </div>
+</div>
